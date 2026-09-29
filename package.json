@@ -1,0 +1,46 @@
+{
+  "name": "notebook-diary",
+  "productName": "Notebook Diary",
+  "version": "1.0.0",
+  "description": "A local desktop notebook diary with autosave, scheduling and native reminder notifications.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis"
+  },
+  "build": {
+    "appId": "com.local.notebookdiary",
+    "productName": "Notebook Diary",
+    "files": [
+      "main.js",
+      "index.html",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Notebook Diary",
+      "artifactName": "Notebook-Diary-Setup-${version}.${ext}"
+    }
+  },
+  "keywords": [
+    "electron",
+    "diary",
+    "notebook",
+    "reminders"
+  ],
+  "author": "Notebook Diary",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^26.15.3"
+  }
+}

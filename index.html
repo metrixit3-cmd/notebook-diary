@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;" />
+  <title>Notebook Diary</title>
+
+  <style>
+    /* =========================================================
+       DESIGN TOKENS - Catppuccin-inspired dark theme
+       ========================================================= */
+    :root {
+      --base: #1e1e2e;
+      --mantle: #181825;
+      --crust: #11111b;
+      --surface0: #313244;
+      --surface1: #45475a;
+      --surface2: #585b70;
+      --overlay0: #6c7086;
+      --text: #cdd6f4;
+      --subtext: #a6adc8;
+      --mauve: #cba6f7;
+      --lavender: #b4befe;
+      --mint: #a6e3a1;
+      --teal: #94e2d5;
+      --peach: #fab387;
+      --red: #f38ba8;
+      --yellow: #f9e2af;
+      --radius: 14px;
+      --radius-sm: 10px;
+      --font: "Segoe UI", "Inter", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+      --mono: "JetBrains Mono", "Fira Code", "Cascadia Code", Consolas, "Courier New", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: var(--base);
+      color: var(--text);
+      font-family: var(--font);
+      overflow: hidden;
+    }
+
+    /* =========================================================
+       LAYOUT
+       ========================================================= */
+    .app {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      grid-template-rows: 1fr 38px;
+      height: 100vh;
+    }
+
+    /* ---------- Sidebar ---------- */
+    .sidebar {
+      grid-row: 1 / 2;
+      grid-column: 1 / 2;
+      background: linear-gradient(180deg, var(--mantle) 0%, var(--crust) 100%);
+      border-right: 1px solid var(--surface0);
+      display: flex;
+      flex-direction: column;
+      padding: 26px 20px 18px;
+      gap: 20px;
+      min-height: 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--mauve), var(--lavender));
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+      box-shadow: 0 6px 22px rgba(203, 166, 247, 0.35);
+    }
+
+    .brand h1 {
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      color: var(--text);
+    }
+
+    .brand p {
+      font-size: 12px;
+      color: var(--subtext);
+      margin-top: 2px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.4px;
+      color: var(--lavender);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* ---------- Scheduler form ---------- */
+    .scheduler {
+      background: var(--base);
+      border: 1px solid var(--surface0);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 12px;
+      color: var(--subtext);
+      margin-bottom: 5px;
+    }
+
+    .field input {
+      width: 100%;
+      background: var(--mantle);
+      color: var(--text);
+      border: 1px solid var(--surface1);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      font-size: 14px;
+      font-family: var(--font);
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      color-scheme: dark;
+    }
+
+    .field input::placeholder { color: var(--overlay0); }
+
+    .field input:focus {
+      border-color: var(--mauve);
+      box-shadow: 0 0 0 3px rgba(203, 166, 247, 0.22);
+    }
+
+    .form-error {
+      min-height: 16px;
+      font-size: 12px;
+      color: var(--red);
+    }
+
+    /* ---------- Buttons ---------- */
+    .btn {
+      border: none;
+      cursor: pointer;
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      padding: 11px 16px;
+      transition: transform 0.12s ease, box-shadow 0.15s ease, filter 0.15s ease, background 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn:active { transform: translateY(1px) scale(0.99); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--mauve), var(--lavender));
+      color: var(--crust);
+      box-shadow: 0 6px 18px rgba(203, 166, 247, 0.28);
+    }
+    .btn-primary:hover { filter: brightness(1.08); box-shadow: 0 8px 24px rgba(203, 166, 247, 0.4); }
+
+    .btn-mint {
+      background: linear-gradient(135deg, var(--mint), var(--teal));
+      color: var(--crust);
+      box-shadow: 0 6px 18px rgba(166, 227, 161, 0.25);
+    }
+    .btn-mint:hover { filter: brightness(1.07); box-shadow: 0 8px 24px rgba(166, 227, 161, 0.38); }
+
+    .btn-ghost {
+      background: var(--surface0);
+      color: var(--text);
+    }
+    .btn-ghost:hover { background: var(--surface1); }
+
+    .btn-ghost.active {
+      background: rgba(203, 166, 247, 0.18);
+      color: var(--mauve);
+      box-shadow: inset 0 0 0 1px rgba(203, 166, 247, 0.45);
+    }
+
+    /* ---------- Reminder list ---------- */
+    .reminders {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .reminder-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding-right: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .group-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.1px;
+      color: var(--overlay0);
+      margin: 8px 2px 2px;
+    }
+
+    .reminder-card {
+      background: var(--base);
+      border: 1px solid var(--surface0);
+      border-left: 4px solid var(--mauve);
+      border-radius: var(--radius-sm);
+      padding: 11px 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      transition: border-color 0.15s ease, transform 0.15s ease;
+    }
+
+    .reminder-card:hover { transform: translateX(2px); border-color: var(--surface2); border-left-color: var(--mauve); }
+
+    .reminder-card.soon { border-left-color: var(--peach); }
+    .reminder-card.done { border-left-color: var(--mint); opacity: 0.68; }
+
+    .reminder-body { flex: 1; min-width: 0; }
+
+    .reminder-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    .reminder-card.done .reminder-title { text-decoration: line-through; text-decoration-color: var(--overlay0); }
+
+    .reminder-time {
+      font-size: 12px;
+      color: var(--subtext);
+      margin-top: 3px;
+    }
+
+    .reminder-eta {
+      display: inline-block;
+      margin-top: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(203, 166, 247, 0.16);
+      color: var(--mauve);
+    }
+
+    .reminder-card.soon .reminder-eta { background: rgba(250, 179, 135, 0.16); color: var(--peach); }
+    .reminder-card.done .reminder-eta { background: rgba(166, 227, 161, 0.16); color: var(--mint); }
+
+    .icon-btn {
+      background: transparent;
+      border: none;
+      color: var(--overlay0);
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      padding: 4px 6px;
+      border-radius: 8px;
+      transition: color 0.15s ease, background 0.15s ease;
+    }
+    .icon-btn:hover { color: var(--red); background: rgba(243, 139, 168, 0.12); }
+
+    .empty-state {
+      border: 1.5px dashed var(--surface1);
+      border-radius: var(--radius);
+      padding: 26px 16px;
+      text-align: center;
+      color: var(--subtext);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .empty-state .emoji { font-size: 30px; display: block; margin-bottom: 8px; }
+    .empty-state strong { color: var(--lavender); }
+
+    .perm-pill {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      background: var(--surface0);
+      color: var(--subtext);
+    }
+    .perm-pill.granted { background: rgba(166, 227, 161, 0.16); color: var(--mint); }
+    .perm-pill.denied { background: rgba(243, 139, 168, 0.16); color: var(--red); }
+
+    /* ---------- Main workspace ---------- */
+    .workspace {
+      grid-row: 1 / 2;
+      grid-column: 2 / 3;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      min-height: 0;
+      background: var(--base);
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 22px 48px 12px;
+    }
+
+    .toolbar-title h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .toolbar-title p {
+      font-size: 13px;
+      color: var(--mauve);
+      margin-top: 3px;
+    }
+
+    .toolbar-actions { display: flex; gap: 10px; align-items: center; }
+
+    .editor-wrap {
+      flex: 1;
+      min-height: 0;
+      padding: 8px 48px 30px;
+      display: flex;
+    }
+
+    #diary,
+    #preview {
+      flex: 1;
+      width: 100%;
+      min-height: 0;
+      background: var(--mantle);
+      border: 1px solid var(--surface0);
+      border-radius: 18px;
+      padding: 34px 40px;
+      color: var(--text);
+      font-size: 16.5px;
+      line-height: 1.85;
+      overflow-y: auto;
+    }
+
+    #diary {
+      resize: none;
+      outline: none;
+      font-family: var(--mono);
+      font-size: 15.5px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      caret-color: var(--mint);
+    }
+
+    #diary::placeholder { color: var(--overlay0); }
+
+    #diary:focus {
+      border-color: var(--lavender);
+      box-shadow: 0 0 0 4px rgba(180, 190, 254, 0.12);
+    }
+
+    #preview { display: none; font-family: var(--font); }
+
+    /* ---------- Markdown preview styling ---------- */
+    #preview h1, #preview h2, #preview h3, #preview h4 {
+      color: var(--mauve);
+      margin: 1.1em 0 0.45em;
+      line-height: 1.3;
+    }
+    #preview h1 { font-size: 1.9em; border-bottom: 1px solid var(--surface0); padding-bottom: 0.25em; }
+    #preview h2 { font-size: 1.5em; color: var(--lavender); }
+    #preview h3 { font-size: 1.22em; color: var(--teal); }
+    #preview h4 { font-size: 1.05em; color: var(--mint); }
+    #preview p { margin: 0.6em 0; }
+    #preview ul, #preview ol { margin: 0.6em 0 0.6em 1.6em; }
+    #preview li { margin: 0.2em 0; }
+    #preview strong { color: var(--peach); }
+    #preview em { color: var(--yellow); }
+    #preview del { color: var(--overlay0); }
+    #preview a { color: var(--teal); text-decoration: none; border-bottom: 1px dashed var(--teal); }
+    #preview a:hover { color: var(--mint); }
+    #preview blockquote {
+      margin: 0.8em 0;
+      padding: 0.5em 1em;
+      border-left: 4px solid var(--mauve);
+      background: rgba(203, 166, 247, 0.07);
+      border-radius: 0 10px 10px 0;
+      color: var(--subtext);
+    }
+    #preview code {
+      font-family: var(--mono);
+      background: var(--surface0);
+      color: var(--mint);
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-size: 0.9em;
+    }
+    #preview pre {
+      background: var(--crust);
+      border: 1px solid var(--surface0);
+      border-radius: 12px;
+      padding: 16px 18px;
+      overflow-x: auto;
+      margin: 0.9em 0;
+    }
+    #preview pre code { background: transparent; padding: 0; color: var(--text); }
+    #preview hr { border: none; border-top: 1px solid var(--surface1); margin: 1.4em 0; }
+    #preview .preview-empty { color: var(--overlay0); font-style: italic; }
+
+    /* ---------- Status bar ---------- */
+    .statusbar {
+      grid-row: 2 / 3;
+      grid-column: 1 / 3;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 22px;
+      background: var(--crust);
+      border-top: 1px solid var(--surface0);
+      font-size: 12.5px;
+      color: var(--subtext);
+    }
+
+    .status-left { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--mint);
+      box-shadow: 0 0 10px var(--mint);
+      transition: background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .statusbar.typing .status-dot { background: var(--yellow); box-shadow: 0 0 10px var(--yellow); animation: pulse 0.9s infinite; }
+    .statusbar.typing #statusText { color: var(--yellow); }
+    .statusbar.saved #statusText { color: var(--mint); }
+    .statusbar.error .status-dot { background: var(--red); box-shadow: 0 0 10px var(--red); }
+    .statusbar.error #statusText { color: var(--red); }
+
+    .status-right { display: flex; gap: 18px; }
+    .status-right span b { color: var(--lavender); font-weight: 600; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(0.8); }
+    }
+
+    /* ---------- Toasts (in-app reminder banners) ---------- */
+    #toasts {
+      position: fixed;
+      right: 22px;
+      bottom: 54px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 1000;
+      max-width: 340px;
+    }
+
+    .toast {
+      background: var(--surface0);
+      border: 1px solid var(--mauve);
+      border-left: 5px solid var(--mint);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 12px 14px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+      font-size: 13.5px;
+      animation: slideIn 0.25s ease;
+      cursor: pointer;
+    }
+    .toast b { display: block; color: var(--mint); margin-bottom: 3px; }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ---------- Scrollbars ---------- */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--surface1); border-radius: 999px; border: 2px solid transparent; background-clip: content-box; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--surface2); background-clip: content-box; }
+
+    ::selection { background: rgba(203, 166, 247, 0.35); }
+
+    @media (max-width: 980px) {
+      .app { grid-template-columns: 290px 1fr; }
+      .toolbar { padding: 18px 26px 10px; }
+      .editor-wrap { padding: 6px 26px 22px; }
+      #diary, #preview { padding: 26px 26px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+
+    <!-- ===================== SIDEBAR ===================== -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">📓</div>
+        <div>
+          <h1>Notebook Diary</h1>
+          <p id="todayLabel">Today</p>
+        </div>
+      </div>
+
+      <section>
+        <div class="section-title">
+          <span>Schedule Appointment</span>
+          <span id="permPill" class="perm-pill">checking</span>
+        </div>
+        <form id="reminderForm" class="scheduler" autocomplete="off">
+          <div class="field">
+            <label for="reminderTitle">Reminder Title</label>
+            <input type="text" id="reminderTitle" maxlength="120" placeholder="e.g. Dentist appointment" />
+          </div>
+          <div class="field">
+            <label for="reminderTime">Date &amp; Time</label>
+            <input type="datetime-local" id="reminderTime" />
+          </div>
+          <div class="form-error" id="formError"></div>
+          <button type="submit" class="btn btn-primary">⏰ Set Reminder</button>
+        </form>
+      </section>
+
+      <section class="reminders">
+        <div class="section-title">
+          <span>Upcoming Reminders</span>
+          <span id="reminderCount" class="perm-pill">0</span>
+        </div>
+        <div class="reminder-scroll" id="reminderList"></div>
+      </section>
+    </aside>
+
+    <!-- ===================== WORKSPACE ===================== -->
+    <main class="workspace">
+      <div class="toolbar">
+        <div class="toolbar-title">
+          <h2>My Diary</h2>
+          <p>Write freely — Markdown is supported. Your words are saved locally.</p>
+        </div>
+        <div class="toolbar-actions">
+          <button type="button" class="btn btn-ghost active" id="btnEdit">✏️ Write</button>
+          <button type="button" class="btn btn-ghost" id="btnPreview">👁️ Preview</button>
+          <button type="button" class="btn btn-mint" id="btnSave">💾 Save Entry</button>
+        </div>
+      </div>
+
+      <div class="editor-wrap">
+        <textarea id="diary" spellcheck="true"
+          placeholder="Dear diary...&#10;&#10;Start writing here. Use # headings, **bold**, *italic*, - lists, > quotes and `code`."></textarea>
+        <div id="preview"></div>
+      </div>
+    </main>
+
+    <!-- ===================== STATUS BAR ===================== -->
+    <footer class="statusbar saved" id="statusBar">
+      <div class="status-left">
+        <span class="status-dot"></span>
+        <span id="statusText">Ready</span>
+      </div>
+      <div class="status-right">
+        <span>Words: <b id="wordCount">0</b></span>
+        <span>Characters: <b id="charCount">0</b></span>
+        <span>Ctrl/Cmd + S to save</span>
+      </div>
+    </footer>
+  </div>
+
+  <div id="toasts"></div>
+
+  <script>
+    'use strict';
+
+    /* =========================================================
+       CONSTANTS
+       ========================================================= */
+    const STORAGE_KEYS = {
+      diary: 'my_diary_text',
+      reminders: 'my_diary_reminders'
+    };
+    const AUTOSAVE_DELAY_MS = 1000;
+    const REMINDER_CHECK_INTERVAL_MS = 5000;
+    const SOON_THRESHOLD_MS = 60 * 60 * 1000; // 1 hour
+
+    /* =========================================================
+       DOM REFERENCES
+       ========================================================= */
+    const el = {
+      diary: document.getElementById('diary'),
+      preview: document.getElementById('preview'),
+      btnEdit: document.getElementById('btnEdit'),
+      btnPreview: document.getElementById('btnPreview'),
+      btnSave: document.getElementById('btnSave'),
+      statusBar: document.getElementById('statusBar'),
+      statusText: document.getElementById('statusText'),
+      wordCount: document.getElementById('wordCount'),
+      charCount: document.getElementById('charCount'),
+      form: document.getElementById('reminderForm'),
+      title: document.getElementById('reminderTitle'),
+      time: document.getElementById('reminderTime'),
+      formError: document.getElementById('formError'),
+      list: document.getElementById('reminderList'),
+      count: document.getElementById('reminderCount'),
+      permPill: document.getElementById('permPill'),
+      todayLabel: document.getElementById('todayLabel'),
+      toasts: document.getElementById('toasts')
+    };
+
+    /* =========================================================
+       APPLICATION STATE
+       ========================================================= */
+    let reminders = [];
+    let autosaveTimer = null;
+    let previewMode = false;
+
+    /* =========================================================
+       SAFE STORAGE HELPERS (localStorage wrapped in try/catch)
+       ========================================================= */
+
+    /**
+     * Read a string from localStorage. Returns null when missing or on error.
+     */
+    function safeGet(key) {
+      try {
+        return window.localStorage.getItem(key);
+      } catch (error) {
+        console.warn('localStorage read failed for "' + key + '":', error);
+        return null;
+      }
+    }
+
+    /**
+     * Write a string to localStorage. Returns true on success, false on failure
+     * (for example when the storage quota is exceeded).
+     */
+    function safeSet(key, value) {
+      try {
+        window.localStorage.setItem(key, value);
+        return true;
+      } catch (error) {
+        console.error('localStorage write failed for "' + key + '":', error);
+        return false;
+      }
+    }
+
+    /* =========================================================
+       STATUS BAR
+       ========================================================= */
+
+    /**
+     * Update the bright status bar at the bottom.
+     * state: 'typing' | 'saved' | 'error'
+     */
+    function setStatus(state, message) {
+      el.statusBar.classList.remove('typing', 'saved', 'error');
+      el.statusBar.classList.add(state);
+      el.statusText.textContent = message;
+    }
+
+    function timeStamp() {
+      return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    function updateCounts() {
+      const text = el.diary.value;
+      const words = text.trim().length === 0 ? 0 : text.trim().split(/\s+/).length;
+      el.wordCount.textContent = String(words);
+      el.charCount.textContent = String(text.length);
+    }
+
+    /* =========================================================
+       DIARY: LOAD, AUTOSAVE (DEBOUNCED), MANUAL SAVE
+       ========================================================= */
+
+    function loadDiary() {
+      const saved = safeGet(STORAGE_KEYS.diary);
+      el.diary.value = typeof saved === 'string' ? saved : '';
+      updateCounts();
+      setStatus('saved', saved === null ? 'Ready — start writing' : 'Entry loaded');
+    }
+
+    /**
+     * Persist the diary text. Returns true on success.
+     */
+    function persistDiary() {
+      return safeSet(STORAGE_KEYS.diary, el.diary.value);
+    }
+
+    /**
+     * Save triggered by the debounce timer.
+     */
+    function autosave() {
+      autosaveTimer = null;
+      if (persistDiary()) {
+        setStatus('saved', 'Autosaved successfully at ' + timeStamp());
+      } else {
+        setStatus('error', 'Autosave failed — storage may be full');
+      }
+    }
+
+    /**
+     * Debounce: every keystroke resets a 1 second timer.
+     */
+    function onDiaryInput() {
+      setStatus('typing', 'Typing...');
+      updateCounts();
+      if (autosaveTimer !== null) {
+        clearTimeout(autosaveTimer);
+      }
+      autosaveTimer = setTimeout(autosave, AUTOSAVE_DELAY_MS);
+    }
+
+    /**
+     * Explicit save (button or keyboard shortcut).
+     */
+    function manualSave() {
+      if (autosaveTimer !== null) {
+        clearTimeout(autosaveTimer);
+        autosaveTimer = null;
+      }
+      if (persistDiary()) {
+        setStatus('saved', 'Entry saved successfully at ' + timeStamp());
+      } else {
+        setStatus('error', 'Save failed — storage may be full');
+      }
+    }
+
+    /* =========================================================
+       MARKDOWN RENDERER (small, safe, dependency-free)
+       ========================================================= */
+
+    function escapeHtml(text) {
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    /**
+     * Apply inline formatting to a single line of text.
+     * The text is HTML-escaped first so user content can never inject markup.
+     */
+    function renderInline(text) {
+      const parts = String(text).split(/(`[^`]+`)/g);
+      return parts.map(function (part, index) {
+        if (index % 2 === 1) {
+          return '<code>' + escapeHtml(part.slice(1, -1)) + '</code>';
+        }
+        let out = escapeHtml(part);
+        out = out.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+        out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        out = out.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+        out = out.replace(/\*([^\s*][^*]*)\*/g, '<em>$1</em>');
+        out = out.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+        return out;
+      }).join('');
+    }
+
+    /**
+     * Convert a markdown document to safe HTML.
+     */
+    function renderMarkdown(source) {
+      const lines = String(source).replace(/\r\n/g, '\n').split('\n');
+      const html = [];
+      let inCode = false;
+      let codeBuffer = [];
+      let listType = null;
+      let paragraph = [];
+
+      function flushParagraph() {
+        if (paragraph.length > 0) {
+          html.push('<p>' + paragraph.map(renderInline).join('<br>') + '</p>');
+          paragraph = [];
+        }
+      }
+
+      function closeList() {
+        if (listType) {
+          html.push('</' + listType + '>');
+          listType = null;
+        }
+      }
+
+      lines.forEach(function (line) {
+        // Fenced code blocks
+        if (/^```/.test(line)) {
+          if (inCode) {
+            html.push('<pre><code>' + escapeHtml(codeBuffer.join('\n')) + '</code></pre>');
+            codeBuffer = [];
+            inCode = false;
+          } else {
+            flushParagraph();
+            closeList();
+            inCode = true;
+          }
+          return;
+        }
+
+        if (inCode) {
+          codeBuffer.push(line);
+          return;
+        }
+
+        // Blank line
+        if (line.trim() === '') {
+          flushParagraph();
+          closeList();
+          return;
+        }
+
+        // Headings
+        const heading = /^(#{1,4})\s+(.*)$/.exec(line);
+        if (heading) {
+          flushParagraph();
+          closeList();
+          const level = heading[1].length;
+          html.push('<h' + level + '>' + renderInline(heading[2]) + '</h' + level + '>');
+          return;
+        }
+
+        // Horizontal rule
+        if (/^(-{3,}|\*{3,}|_{3,})\s*$/.test(line)) {
+          flushParagraph();
+          closeList();
+          html.push('<hr>');
+          return;
+        }
+
+        // Blockquote
+        const quote = /^>\s?(.*)$/.exec(line);
+        if (quote) {
+          flushParagraph();
+          closeList();
+          html.push('<blockquote>' + renderInline(quote[1]) + '</blockquote>');
+          return;
+        }
+
+        // Unordered list
+        const ul = /^\s*[-*+]\s+(.*)$/.exec(line);
+        if (ul) {
+          flushParagraph();
+          if (listType !== 'ul') {
+            closeList();
+            html.push('<ul>');
+            listType = 'ul';
+          }
+          html.push('<li>' + renderInline(ul[1]) + '</li>');
+          return;
+        }
+
+        // Ordered list
+        const ol = /^\s*\d+[.)]\s+(.*)$/.exec(line);
+        if (ol) {
+          flushParagraph();
+          if (listType !== 'ol') {
+            closeList();
+            html.push('<ol>');
+            listType = 'ol';
+          }
+          html.push('<li>' + renderInline(ol[1]) + '</li>');
+          return;
+        }
+
+        // Regular paragraph text
+        closeList();
+        paragraph.push(line);
+      });
+
+      // Flush anything left open at end of document
+      if (inCode) {
+        html.push('<pre><code>' + escapeHtml(codeBuffer.join('\n')) + '</code></pre>');
+      }
+      flushParagraph();
+      closeList();
+
+      return html.join('\n');
+    }
+
+    /* =========================================================
+       EDIT / PREVIEW TOGGLE
+       ========================================================= */
+
+    function setPreviewMode(enabled) {
+      previewMode = enabled;
+      if (enabled) {
+        const text = el.diary.value;
+        el.preview.innerHTML = text.trim().length === 0
+          ? '<p class="preview-empty">Nothing to preview yet — write something in the editor first.</p>'
+          : renderMarkdown(text);
+        el.diary.style.display = 'none';
+        el.preview.style.display = 'block';
+      } else {
+        el.preview.style.display = 'none';
+        el.diary.style.display = 'block';
+        el.diary.focus();
+      }
+      el.btnEdit.classList.toggle('active', !enabled);
+      el.btnPreview.classList.toggle('active', enabled);
+    }
+
+    /* =========================================================
+       REMINDERS: SANITIZE, LOAD, SAVE
+       ========================================================= */
+
+    function generateId() {
+      return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 9);
+    }
+
+    /**
+     * Turn whatever was stored into a clean array of well-formed reminders.
+     * Anything malformed is silently discarded.
+     */
+    function sanitizeReminders(raw) {
+      if (!Array.isArray(raw)) {
+        return [];
+      }
+
+      const seen = new Set();
+      const clean = [];
+
+      raw.forEach(function (item) {
+        if (!item || typeof item !== 'object') {
+          return;
+        }
+
+        const title = typeof item.title === 'string' ? item.title.trim().slice(0, 120) : '';
+        let time = item.time;
+        if (typeof time === 'string') {
+          time = Date.parse(time);
+        }
+        if (!title || typeof time !== 'number' || !Number.isFinite(time)) {
+          return;
+        }
+
+        let id = typeof item.id === 'string' && item.id ? item.id : generateId();
+        if (seen.has(id)) {
+          id = generateId();
+        }
+        seen.add(id);
+
+        clean.push({
+          id: id,
+          title: title,
+          time: time,
+          triggered: item.triggered === true
+        });
+      });
+
+      return sortReminders(clean);
+    }
+
+    function sortReminders(list) {
+      return list.slice().sort(function (a, b) { return a.time - b.time; });
+    }
+
+    function loadReminders() {
+      const stored = safeGet(STORAGE_KEYS.reminders);
+      if (stored === null) {
+        reminders = [];
+        return;
+      }
+      try {
+        reminders = sanitizeReminders(JSON.parse(stored));
+      } catch (error) {
+        console.warn('Stored reminders were corrupted and have been reset:', error);
+        reminders = [];
+      }
+    }
+
+    function saveReminders() {
+      const ok = safeSet(STORAGE_KEYS.reminders, JSON.stringify(reminders));
+      if (!ok) {
+        setStatus('error', 'Could not save reminders — storage may be full');
+      }
+      return ok;
+    }
+
+    /* =========================================================
+       REMINDERS: RENDERING
+       ========================================================= */
+
+    function formatDateTime(timestamp) {
+      return new Date(timestamp).toLocaleString([], {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    function formatEta(timestamp) {
+      const diff = timestamp - Date.now();
+      if (diff <= 0) {
+        return 'Due now';
+      }
+      const minutes = Math.floor(diff / 60000);
+      const hours = Math.floor(minutes / 60);
+      const days = Math.floor(hours / 24);
+      if (days >= 1) {
+        return 'In ' + days + 'd ' + (hours % 24) + 'h';
+      }
+      if (hours >= 1) {
+        return 'In ' + hours + 'h ' + (minutes % 60) + 'm';
+      }
+      if (minutes >= 1) {
+        return 'In ' + minutes + 'm';
+      }
+      return 'In under a minute';
+    }
+
+    function buildReminderCard(reminder) {
+      const card = document.createElement('div');
+      card.className = 'reminder-card';
+
+      const isDone = reminder.triggered;
+      const isSoon = !isDone && (reminder.time - Date.now()) <= SOON_THRESHOLD_MS;
+      if (isDone) {
+        card.classList.add('done');
+      } else if (isSoon) {
+        card.classList.add('soon');
+      }
+
+      const body = document.createElement('div');
+      body.className = 'reminder-body';
+
+      const title = document.createElement('div');
+      title.className = 'reminder-title';
+      title.textContent = reminder.title;
+
+      const time = document.createElement('div');
+      time.className = 'reminder-time';
+      time.textContent = formatDateTime(reminder.time);
+
+      const eta = document.createElement('span');
+      eta.className = 'reminder-eta';
+      eta.textContent = isDone ? '✓ Notified' : formatEta(reminder.time);
+
+      body.appendChild(title);
+      body.appendChild(time);
+      body.appendChild(eta);
+
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'icon-btn';
+      remove.title = 'Delete reminder';
+      remove.setAttribute('aria-label', 'Delete reminder ' + reminder.title);
+      remove.textContent = '✕';
+      remove.addEventListener('click', function () {
+        deleteReminder(reminder.id);
+      });
+
+      card.appendChild(body);
+      card.appendChild(remove);
+      return card;
+    }
+
+    function buildGroupLabel(text) {
+      const label = document.createElement('div');
+      label.className = 'group-label';
+      label.textContent = text;
+      return label;
+    }
+
+    function renderReminders() {
+      el.list.textContent = '';
+
+      const upcoming = reminders.filter(function (r) { return !r.triggered; });
+      const past = reminders.filter(function (r) { return r.triggered; }).reverse();
+
+      el.count.textContent = String(upcoming.length);
+
+      if (reminders.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'empty-state';
+        empty.innerHTML = '<span class="emoji">🌙</span>' +
+          '<strong>No reminders yet</strong><br>Add an appointment above and you will be notified right on time.';
+        el.list.appendChild(empty);
+        return;
+      }
+
+      if (upcoming.length > 0) {
+        upcoming.forEach(function (r) { el.list.appendChild(buildReminderCard(r)); });
+      } else {
+        const none = document.createElement('div');
+        none.className = 'empty-state';
+        none.innerHTML = '<span class="emoji">✨</span><strong>All caught up</strong><br>No upcoming reminders.';
+        el.list.appendChild(none);
+      }
+
+      if (past.length > 0) {
+        el.list.appendChild(buildGroupLabel('Already notified'));
+        past.forEach(function (r) { el.list.appendChild(buildReminderCard(r)); });
+      }
+    }
+
+    /* =========================================================
+       REMINDERS: ACTIONS
+       ========================================================= */
+
+    /**
+     * Format a Date for <input type="datetime-local"> in LOCAL time.
+     */
+    function toLocalInputValue(date) {
+      const pad = function (n) { return String(n).padStart(2, '0'); };
+      return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) +
+        'T' + pad(date.getHours()) + ':' + pad(date.getMinutes());
+    }
+
+    function setDefaultReminderTime() {
+      const later = new Date(Date.now() + 60 * 60 * 1000);
+      later.setSeconds(0, 0);
+      el.time.value = toLocalInputValue(later);
+    }
+
+    function showFormError(message) {
+      el.formError.textContent = message;
+    }
+
+    function focusTitleQuietly() {
+      skipSmartFill = true;
+      el.title.focus();
+      skipSmartFill = false;
+    }
+
+    function addReminder(event) {
+      event.preventDefault();
+      showFormError('');
+
+      const title = el.title.value.trim();
+      const timeValue = el.time.value;
+
+      if (!title) {
+        showFormError('Please enter a reminder title.');
+        focusTitleQuietly();
+        return;
+      }
+      if (!timeValue) {
+        showFormError('Please choose a date and time.');
+        el.time.focus();
+        return;
+      }
+
+      const timestamp = new Date(timeValue).getTime();
+      if (!Number.isFinite(timestamp)) {
+        showFormError('That date and time is not valid.');
+        return;
+      }
+
+      reminders.push({
+        id: generateId(),
+        title: title.slice(0, 120),
+        time: timestamp,
+        triggered: false
+      });
+      reminders = sortReminders(reminders);
+
+      saveReminders();
+      renderReminders();
+
+      el.title.value = '';
+      setDefaultReminderTime();
+      focusTitleQuietly();
+
+      // A reminder set in the past (or right now) should fire immediately.
+      checkReminders();
+    }
+
+    function deleteReminder(id) {
+      reminders = reminders.filter(function (r) { return r.id !== id; });
+      saveReminders();
+      renderReminders();
+    }
+
+    /* =========================================================
+       NOTIFICATIONS
+       ========================================================= */
+
+    function updatePermissionPill() {
+      let state = 'unsupported';
+      if ('Notification' in window) {
+        state = Notification.permission;
+      }
+      el.permPill.className = 'perm-pill';
+      if (state === 'granted') {
+        el.permPill.classList.add('granted');
+        el.permPill.textContent = 'Alerts on';
+      } else if (state === 'denied') {
+        el.permPill.classList.add('denied');
+        el.permPill.textContent = 'Alerts blocked';
+      } else if (state === 'default') {
+        el.permPill.textContent = 'Alerts pending';
+      } else {
+        el.permPill.classList.add('denied');
+        el.permPill.textContent = 'Unsupported';
+      }
+    }
+
+    /**
+     * Ask for Notification permission immediately on startup.
+     */
+    function requestNotificationPermission() {
+      if (!('Notification' in window)) {
+        updatePermissionPill();
+        return;
+      }
+
+      if (Notification.permission === 'default') {
+        try {
+          const result = Notification.requestPermission(function () {
+            updatePermissionPill();
+          });
+          if (result && typeof result.then === 'function') {
+            result.then(updatePermissionPill).catch(updatePermissionPill);
+          }
+        } catch (error) {
+          console.warn('Notification permission request failed:', error);
+        }
+      }
+      updatePermissionPill();
+    }
+
+    /**
+     * Show a small in-app banner as a backup to the native notification.
+     */
+    function showToast(title, message) {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+
+      const heading = document.createElement('b');
+      heading.textContent = title;
+      const body = document.createElement('span');
+      body.textContent = message;
+
+      toast.appendChild(heading);
+      toast.appendChild(body);
+
+      const dismiss = function () {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      };
+      toast.addEventListener('click', dismiss);
+      el.toasts.appendChild(toast);
+      setTimeout(dismiss, 12000);
+    }
+
+    /**
+     * Trigger a native desktop notification (plus an in-app toast).
+     */
+    function notifyReminder(reminder) {
+      const body = reminder.title + ' — ' + formatDateTime(reminder.time);
+
+      if ('Notification' in window && Notification.permission === 'granted') {
+        try {
+          new Notification('⏰ Reminder', { body: body, silent: false });
+        } catch (error) {
+          console.warn('Native notification failed:', error);
+        }
+      }
+
+      showToast('⏰ Reminder', body);
+    }
+
+    /* =========================================================
+       BACKGROUND REMINDER LOOP
+       ========================================================= */
+
+    /**
+     * Compare the current local clock against every pending reminder.
+     * Each reminder fires exactly once: the triggered flag is saved before
+     * the notification is shown.
+     */
+    function checkReminders() {
+      const now = Date.now();
+      const due = reminders.filter(function (r) { return !r.triggered && r.time <= now; });
+
+      if (due.length === 0) {
+        return;
+      }
+
+      due.forEach(function (r) { r.triggered = true; });
+      saveReminders();
+      due.forEach(notifyReminder);
+      renderReminders();
+    }
+
+    function startReminderLoop() {
+      checkReminders();
+      setInterval(function () {
+        checkReminders();
+        renderReminders(); // keeps the "In 5m" labels fresh
+      }, REMINDER_CHECK_INTERVAL_MS);
+    }
+
+    /* =========================================================
+       HEADER DATE
+       ========================================================= */
+
+    function updateTodayLabel() {
+      el.todayLabel.textContent = new Date().toLocaleDateString([], {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric'
+      });
+    }
+
+    /* =========================================================
+       SMART TEXT MATCHING
+       ========================================================= */
+
+    let skipSmartFill = false; // true while the app itself moves focus to the title
+    const SMART_KEYWORDS = /\b(meeting|deadline|call|appointment|doctor|interview|schedule)\b/i;
+
+    /**
+     * Scan the diary line by line / sentence by sentence and return the first
+     * smart keyword found, capitalised (e.g. "meeting" -> "Meeting"), or ''.
+     */
+    function findSmartKeyword(text) {
+      const chunks = String(text).split(/[\n.!?]+/);
+      for (let i = 0; i < chunks.length; i++) {
+        const match = SMART_KEYWORDS.exec(chunks[i]);
+        if (match) {
+          const word = match[1].toLowerCase();
+          return word.charAt(0).toUpperCase() + word.slice(1);
+        }
+      }
+      return '';
+    }
+
+    /**
+     * On focus, auto-fill an empty Reminder Title from the diary text.
+     */
+    function onTitleFocus() {
+      if (skipSmartFill || el.title.value.trim() !== '') {
+        return;
+      }
+      const keyword = findSmartKeyword(el.diary.value);
+      if (keyword) {
+        el.title.value = keyword;
+        el.title.select();
+        showFormError('');
+      }
+    }
+
+    /* =========================================================
+       EVENT WIRING & STARTUP
+       ========================================================= */
+
+    function bindEvents() {
+      el.title.addEventListener('focus', onTitleFocus);
+      el.diary.addEventListener('input', onDiaryInput);
+      el.btnSave.addEventListener('click', manualSave);
+      el.btnEdit.addEventListener('click', function () { setPreviewMode(false); });
+      el.btnPreview.addEventListener('click', function () { setPreviewMode(true); });
+      el.form.addEventListener('submit', addReminder);
+
+      document.addEventListener('keydown', function (event) {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+          event.preventDefault();
+          manualSave();
+        }
+      });
+
+      // Flush any pending autosave when the window closes.
+      window.addEventListener('beforeunload', function () {
+        if (autosaveTimer !== null) {
+          clearTimeout(autosaveTimer);
+          persistDiary();
+        }
+      });
+    }
+
+    function init() {
+      updateTodayLabel();
+      requestNotificationPermission();
+      loadDiary();
+      loadReminders();
+      setDefaultReminderTime();
+      renderReminders();
+      bindEvents();
+      startReminderLoop();
+    }
+
+    init();
+  </script>
+</body>
+</html>
